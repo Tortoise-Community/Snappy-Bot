@@ -104,6 +104,53 @@ class PointsManager:
                 row = await cursor.fetchone()
                 return row[0] if row else 0
 
+    async def remove_points(self, guild_id: int, user_id: int, amount: int) -> int:
+        """
+        Remove points from a user and return the new total.
+        Points will not go below 0.
+        """
+        async with aiosqlite.connect(self.db_path) as db:
+            # Decrease points; ensure row exists
+            await db.execute(
+                """
+                INSERT INTO points (guild_id, user_id, points)
+                VALUES (?, ?, 0)
+                ON CONFLICT(guild_id, user_id)
+                DO NOTHING
+                """,
+                (guild_id, user_id),
+            )
+
+            # Subtract points (temporary negative allowed)
+            await db.execute(
+                """
+                UPDATE points
+                SET points = points - ?
+                WHERE guild_id = ? AND user_id = ?
+                """,
+                (amount, guild_id, user_id),
+            )
+
+            # Clamp to 0
+            await db.execute(
+                """
+                UPDATE points
+                SET points = 0
+                WHERE guild_id = ? AND user_id = ? AND points < 0
+                """,
+                (guild_id, user_id),
+            )
+
+            await db.commit()
+
+            # Fetch updated total
+            async with db.execute(
+                    "SELECT points FROM points WHERE guild_id = ? AND user_id = ?",
+                    (guild_id, user_id),
+            ) as cursor:
+                row = await cursor.fetchone()
+                return row[0] if row else 0
+
     async def get_points(self, guild_id: int, user_id: int) -> int:
         """Get current points of a user."""
         async with aiosqlite.connect(self.db_path) as db:

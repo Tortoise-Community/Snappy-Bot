@@ -17,10 +17,47 @@ class Leaderboard(commands.Cog):
     # ------------- commands -------------
 
     @app_commands.command(
+        name="rmpoints",
+        description="Remove points from a user (mods only).",
+    )
+    @app_commands.checks.has_permissions(ban_members=True)
+    async def rmpoints(
+        self,
+        interaction: discord.Interaction,
+        member: discord.Member,
+        amount: app_commands.Range[int, 1, 10_000],
+    ):
+        if interaction.guild is None:
+            await interaction.response.send_message(
+                "This command can only be used in a server.",
+                ephemeral=True,
+            )
+            return
+
+        new_total = await self.manager.remove_points(
+            interaction.guild.id, member.id, amount
+        )
+
+        desc = (
+            f"**{amount}** points have been removed from **{member.mention}**\n"
+            f"New total: **{new_total}** points."
+        )
+
+        embed = discord.Embed(
+            title="Points Removed ❎",
+            description=desc,
+            color=discord.Color.green(),
+        )
+
+        await interaction.response.send_message(embed=embed, ephemeral=True)
+
+
+
+    @app_commands.command(
         name="addpoints",
         description="Give points to a user (mods only).",
     )
-    @app_commands.checks.has_permissions(manage_messages=True)
+    @app_commands.checks.has_permissions(ban_members=True)
     async def addpoints(
         self,
         interaction: discord.Interaction,
@@ -43,8 +80,15 @@ class Leaderboard(commands.Cog):
             f"**{member.mention}** has been given **{amount}** points.\n"
             f"New total: **{new_total}** points."
         )
+
+        dm_desc = (
+            f"You were awarded **{amount}** points.\n"
+            f"New total: **{new_total}** points."
+        )
+
         if reason:
-            desc += f"\n**Reason:** {reason}"
+            desc += f"\n**Comment:** {reason}"
+            dm_desc += f"\n\n**Comment:** {reason}"
 
         embed = discord.Embed(
             title="Points Awarded ✅",
@@ -52,18 +96,13 @@ class Leaderboard(commands.Cog):
             color=discord.Color.green(),
         )
 
-        embed.set_footer(text=f"Given by {interaction.user.display_name}")
-
-        dm_desc = (
-            f"You were awarded **{amount}** points.\n"
-            f"New total: **{new_total}** points."
-        )
-
         dm_embed = discord.Embed(
             title="Congratulations :star2:",
             description=dm_desc,
             color=discord.Color.green(),
         )
+
+        embed.set_footer(text=f"Given by {interaction.user.display_name}")
         dm_embed.set_footer(text=f"Great job! 💠 Tortoise Community")
 
         await member.send(embed=dm_embed);
