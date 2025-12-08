@@ -36,7 +36,6 @@ class AdventOfCode(commands.Cog):
         # Ensure bot is ready before the loop starts
         await self.bot.wait_until_ready()
 
-    # ----------------- Slash commands -----------------
 
     @app_commands.command(
         name="aoc_invite",
@@ -64,11 +63,7 @@ class AdventOfCode(commands.Cog):
         description="Show the Tortoise Advent of Code leaderboard (cached)."
     )
     async def leaderboard(self, interaction: discord.Interaction):
-        """
-        Shows Tortoise leaderboard.
-
-        Leaderboard is updated every 30 minutes by the background task.
-        """
+        """Shows Tortoise leaderboard."""
         guild = interaction.guild
         if guild is None:
             await interaction.response.send_message(

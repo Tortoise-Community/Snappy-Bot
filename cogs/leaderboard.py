@@ -214,7 +214,5 @@ class Leaderboard(commands.Cog):
 
 
 async def setup(bot: commands.Bot):
-    cog = Leaderboard(bot)
-    await bot.add_cog(cog)
-    print("Leaderboard cog loaded.")
+    await bot.add_cog(Leaderboard(bot))
 

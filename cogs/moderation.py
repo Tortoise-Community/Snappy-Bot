@@ -63,7 +63,7 @@ class Moderation(commands.Cog):
 
         # Perform the ban
         try:
-            # await guild.ban(member, reason=reason)
+            await guild.ban(member, reason=reason)
             pass
         except discord.Forbidden:
             await interaction.followup.send("I don't have permission to ban that member.")
@@ -105,5 +105,4 @@ class Moderation(commands.Cog):
 
 
 async def setup(bot):
-    print("Moderation cog loaded.")
     await bot.add_cog(Moderation(bot))

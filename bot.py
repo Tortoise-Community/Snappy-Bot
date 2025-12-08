@@ -49,6 +49,23 @@ async def on_ready():
     ))
 
 
+@bot.event
+async def on_message(message: discord.Message):
+    if message.author.bot:
+        return
+
+    if message.guild is None:
+        try:
+            await message.channel.send(
+                "🚫 Commands are disabled in DMs. Please use me in a server."
+            )
+        except discord.Forbidden:
+            pass
+        return
+    await bot.process_commands(message)
+
+
+
 async def main():
     async with bot:
         await bot.start(TOKEN)
