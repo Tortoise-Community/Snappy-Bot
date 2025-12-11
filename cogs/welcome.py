@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import discord
 from discord.ext import commands
+import constants
 
 WELCOME_CHANNEL_ID = 577192344533598472
 
@@ -40,15 +41,21 @@ class Welcome(commands.Cog):
             pass
 
         try:
+            content_footer = (
+                f"Links: [Website]({constants.website_url}) | "
+                f"[Rules]({constants.rules_url}) | "
+                f"[Events]({constants.events_url})"
+            )
             dm_embed = discord.Embed(
                 title=f"Welcome to {guild.name}!",
                 description=(
-                    "For daily **Leetcode challenges** checkout <#780841435712716800>\n\n"
-                    "Please introduce yourself in <#577192344533598472>"
+                    "Introduce yourself in <#577192344533598472>\n\n"
+                    "For **Leetcode challenges** checkout <#780841435712716800>\n\n\n"
+                    + content_footer
                 ),
                 color=discord.Color.green(),
             )
-            dm_embed.set_footer(text="If you have any questions, feel free to ask the staff team.", icon_url="https://s6.imgcdn.dev/YP66q0.png")
+            dm_embed.set_footer(text="Tortoise Programming Community", icon_url="https://s6.imgcdn.dev/YP66q0.png")
             await member.send(embed=dm_embed)
         except discord.Forbidden:
             # User has DMs closed – just ignore

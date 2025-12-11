@@ -2,8 +2,8 @@ from discord import Color
 
 tortoise_guild_id = 577192344529404154
 website_url = "https://www.tortoisecommunity.org/"
-privacy_url = "https://www.tortoisecommunity.org/pages/privacy"
-rules_url = "https://www.tortoisecommunity.org/pages/rules"
+events_url = "https://www.tortoisecommunity.org/events"
+rules_url = "https://www.tortoisecommunity.org/rules"
 verification_url = "https://www.tortoisecommunity.org/verification/"
 github_repo_link = "https://github.com/Tortoise-Community/Tortoise-BOT"
 tortoise_paste_service_link = "https://paste.tortoisecommunity.org/"
