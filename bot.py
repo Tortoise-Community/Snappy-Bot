@@ -29,7 +29,7 @@ class MyBot(commands.Bot):
         await self.leaderboard_manager.setup()
         await self.load_extension("cogs.moderation")
         await self.load_extension("cogs.leaderboard")
-        await self.load_extension("cogs.advent_of_code")
+        # await self.load_extension("cogs.advent_of_code")
         await self.load_extension("cogs.welcome")
         guild = discord.Object(id=GUILD_ID)
         await self.tree.sync()
@@ -48,7 +48,7 @@ status_list = itertools.cycle([
 
 @tasks.loop(minutes=1)
 async def change_status():
-    await bot.change_presence(activity=discord.Activity(
+    await bot.change_presence(status=discord.Status.dnd, activity=discord.Activity(
         type=discord.ActivityType.watching,
         name=next(status_list)
     ))
