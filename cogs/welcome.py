@@ -50,12 +50,13 @@ class Welcome(commands.Cog):
                 title=f"Welcome to {guild.name}!",
                 description=(
                     "Introduce yourself in <#577192344533598472>\n\n"
+                    "Leetcode discussion <#1455600810586280069>\n\n"
                     "For **Leetcode challenges** checkout <#780841435712716800>\n\n\n"
                     + content_footer
                 ),
                 color=discord.Color.green(),
             )
-            dm_embed.set_footer(text="Tortoise Programming Community", icon_url="https://s6.imgcdn.dev/YP66q0.png")
+            dm_embed.set_footer(text="Tortoise Programming Community", icon_url="https://lairesit.sirv.com/Images/tortoise.png")
             await member.send(embed=dm_embed)
         except discord.Forbidden:
             # User has DMs closed – just ignore
