@@ -1,11 +1,11 @@
 # bot.py
 import asyncio
-import os
-
+import itertools
 import discord
 from discord.ext import commands
 from decouple import config
 from utils.manager import BanLimitManager, PointsManager
+from discord.ext import tasks
 
 TOKEN = config("DISCORD_BOT_TOKEN")
 GUILD_ID = 577192344529404154
@@ -39,14 +39,26 @@ class MyBot(commands.Bot):
 bot = MyBot()
 
 
+
+status_list = itertools.cycle([
+    "watching Tortoise Community 👀",
+    "solving Leetcode problems 👨‍💻",
+])
+
+
+@tasks.loop(minutes=1)
+async def change_status():
+    await bot.change_presence(activity=discord.Activity(
+        type=discord.ActivityType.watching,
+        name=next(status_list)
+    ))
+
+
 @bot.event
 async def on_ready():
     print(f"Logged in as {bot.user} (ID: {bot.user.id})")
     print("------")
-    await bot.change_presence(activity=discord.Activity(
-        type=discord.ActivityType.watching,
-        name="watching Tortoise Community"
-    ))
+    change_status.start()
 
 
 @bot.event
