@@ -22,7 +22,7 @@ class StatusCog(commands.Cog):
         self.change_status.cancel()
 
 
-    @tasks.loop(seconds=10)
+    @tasks.loop(seconds=50)
     async def change_status(self):
         if not self.statuses:
             return
