@@ -1,7 +1,7 @@
-# bot.py
 import asyncio
 import itertools
 import discord
+from discord import app_commands
 from discord.ext import commands
 from decouple import config
 from utils.manager import BanLimitManager, PointsManager
@@ -9,6 +9,7 @@ from discord.ext import tasks
 
 TOKEN = config("DISCORD_BOT_TOKEN")
 GUILD_ID = 577192344529404154
+
 
 class MyBot(commands.Bot):
     def __init__(self):
@@ -23,6 +24,7 @@ class MyBot(commands.Bot):
         self.leaderboard_manager = PointsManager()
 
 
+
     async def setup_hook(self) -> None:
         # Load cogs/extensions here
         await self.ban_manager.setup()
@@ -31,6 +33,7 @@ class MyBot(commands.Bot):
         await self.load_extension("cogs.leaderboard")
         # await self.load_extension("cogs.advent_of_code")
         await self.load_extension("cogs.welcome")
+        await self.load_extension("cogs.status")
         guild = discord.Object(id=GUILD_ID)
         await self.tree.sync()
         print("Synced application commands.")
@@ -39,26 +42,10 @@ class MyBot(commands.Bot):
 bot = MyBot()
 
 
-
-status_list = itertools.cycle([
-    "watching Tortoise Community 👀",
-    "solving Leetcode problems 👨‍💻",
-])
-
-
-@tasks.loop(minutes=1)
-async def change_status():
-    await bot.change_presence(status=discord.Status.dnd, activity=discord.Activity(
-        type=discord.ActivityType.watching,
-        name=next(status_list)
-    ))
-
-
 @bot.event
 async def on_ready():
     print(f"Logged in as {bot.user} (ID: {bot.user.id})")
     print("------")
-    change_status.start()
 
 
 @bot.event
@@ -75,7 +62,6 @@ async def on_message(message: discord.Message):
             pass
         return
     await bot.process_commands(message)
-
 
 
 async def main():
