@@ -1,4 +1,3 @@
-import os
 import aiohttp
 from typing import Any, Dict, Optional
 from decouple import config

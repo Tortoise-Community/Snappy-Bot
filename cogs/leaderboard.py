@@ -14,8 +14,6 @@ class Leaderboard(commands.Cog):
         self.bot = bot
         self.manager = self.bot.leaderboard_manager
 
-    # ------------- commands -------------
-
     @app_commands.command(
         name="rmpoints",
         description="Remove points from a user (mods only).",

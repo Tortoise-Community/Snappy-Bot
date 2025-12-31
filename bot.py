@@ -1,11 +1,10 @@
 import asyncio
-import itertools
+
 import discord
-from discord import app_commands
-from discord.ext import commands
 from decouple import config
+from discord.ext import commands
+
 from utils.manager import BanLimitManager, PointsManager
-from discord.ext import tasks
 
 TOKEN = config("DISCORD_BOT_TOKEN")
 GUILD_ID = 577192344529404154
@@ -14,11 +13,11 @@ GUILD_ID = 577192344529404154
 class MyBot(commands.Bot):
     def __init__(self):
         intents = discord.Intents.default()
-        intents.members = True  # needed for member info / bans
+        intents.members = True
         super().__init__(
-            command_prefix="!",  # prefix is optional now, mainly for owner/debug commands
+            command_prefix="!",
             intents=intents,
-            application_id=None,  # can set your app ID here if you want
+            application_id=None,
         )
         self.ban_manager = BanLimitManager()
         self.leaderboard_manager = PointsManager()

@@ -6,6 +6,7 @@ from discord import app_commands
 
 
 class Moderation(commands.Cog):
+    """This cog is to be removed after Tortoise bot is back online"""
     def __init__(self, bot):
         self.bot = bot
 

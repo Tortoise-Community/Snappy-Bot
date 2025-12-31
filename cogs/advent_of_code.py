@@ -16,15 +16,13 @@ class AdventOfCode(commands.Cog):
 
     def __init__(self, bot: commands.Bot):
         self.bot = bot
-        # AdventOfCodeAPI likely expects a loop; we pass the bot's loop
         self.aoc_api = AdventOfCodeAPI(
             leaderboard_id=self.TORTOISE_LEADERBOARD_ID,
-            year=2025,  # update per AoC season
+            year=2025,
         )
         self._leaderboard_cache = None
         self.update_leaderboard_cache.start()
 
-    # ----------------- Background task -----------------
 
     @tasks.loop(minutes=30)
     async def update_leaderboard_cache(self):
@@ -137,7 +135,6 @@ class AdventOfCode(commands.Cog):
             return
 
         current_day = now.day
-        # NOTE: year is hard-coded to 2020 as in your original code
         end_date = datetime.datetime(
             year=2025,
             month=12,
