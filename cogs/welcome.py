@@ -112,6 +112,9 @@ class Welcome(commands.Cog):
                     await member.remove_roles(role, reason="Welcome role expired")
                 except discord.Forbidden:
                     pass
+                except Exception:
+                    # account for users who've already left
+                    pass
 
             await self.manager.delete_entry(guild_id, user_id, role_id)
 
