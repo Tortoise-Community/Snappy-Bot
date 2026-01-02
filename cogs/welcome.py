@@ -1,43 +1,52 @@
 from __future__ import annotations
 
 import discord
-from discord.ext import commands
+from discord.ext import commands, tasks
 import constants
 
+from utils.manager import WelcomeRoleManager
+
 WELCOME_CHANNEL_ID = 577192344533598472
+WELCOME_ROLE_DURATION_DAYS = 7
 
 
 class Welcome(commands.Cog):
-    """Send a welcome message when someone joins the server."""
+    """Send a welcome message and manage temporary welcome role."""
 
     def __init__(self, bot: commands.Bot):
         self.bot = bot
+        self.manager = WelcomeRoleManager()
+        self.remove_welcome_roles.start()
 
     @commands.Cog.listener()
     async def on_member_join(self, member: discord.Member):
-        # Ignore DMs / non-guild joins (just in case)
         guild = member.guild
-        if guild is None or guild.id !=  577192344529404154:
+        if guild is None or guild.id != constants.tortoise_guild_id:
             return
 
-        # Decide which channel to send to
-        channel = None
-
-        if WELCOME_CHANNEL_ID:
-            channel = guild.get_channel(WELCOME_CHANNEL_ID)
-
-        # Fallback: use system channel if set and viewable
-        if channel is None:
-            channel = guild.system_channel
-
-        # If we still don't have a channel, give up gracefully
-        if channel is None:
+        welcome_role = guild.get_role(constants.new_member_role)
+        if welcome_role is None:
             return
+
+        channel = guild.get_channel(WELCOME_CHANNEL_ID) or guild.system_channel
+        if channel:
+            try:
+                await channel.send(
+                    content=f"Hi {member.mention}! Welcome to our server.",
+                    delete_after=120,
+                )
+            except discord.Forbidden:
+                pass
 
         try:
-            await channel.send(content=f"Hi {member.mention}! Welcome to our server.", delete_after=120)
+            await member.add_roles(welcome_role, reason="Welcome role added")
+            await self.manager.schedule_removal(
+                guild_id=guild.id,
+                user_id=member.id,
+                role_id=welcome_role.id,
+                days=WELCOME_ROLE_DURATION_DAYS,
+            )
         except discord.Forbidden:
-            # Bot can't send messages in the channel
             pass
 
         try:
@@ -56,11 +65,40 @@ class Welcome(commands.Cog):
                 ),
                 color=discord.Color.green(),
             )
-            dm_embed.set_footer(text="Tortoise Programming Community", icon_url="https://lairesit.sirv.com/Images/tortoise.png")
+            dm_embed.set_footer(
+                text="Tortoise Programming Community",
+                icon_url="https://lairesit.sirv.com/Images/tortoise.png",
+            )
             await member.send(embed=dm_embed)
         except discord.Forbidden:
-            # User has DMs closed – just ignore
             pass
+
+    # -------- Background task --------
+
+    @tasks.loop(hours=6)
+    async def remove_welcome_roles(self):
+        removals = await self.manager.get_due_removals()
+
+        for guild_id, user_id, role_id in removals:
+            guild = self.bot.get_guild(guild_id)
+            if not guild:
+                continue
+
+            member = guild.get_member(user_id)
+            role = guild.get_role(role_id)
+
+            if member and role:
+                try:
+                    await member.remove_roles(role, reason="Welcome role expired")
+                except discord.Forbidden:
+                    pass
+
+            await self.manager.delete_entry(guild_id, user_id, role_id)
+
+    @remove_welcome_roles.before_loop
+    async def before_remove_welcome_roles(self):
+        await self.bot.wait_until_ready()
+        await self.manager.setup()
 
 
 async def setup(bot: commands.Bot):

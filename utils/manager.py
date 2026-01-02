@@ -1,5 +1,6 @@
 import aiosqlite
-from datetime import datetime
+from datetime import datetime, timedelta
+
 
 class BanLimitManager:
     def __init__(self, db_path: str = "data/ban_limits.db", max_bans: int = 3, hours: int = 24):
@@ -16,8 +17,8 @@ class BanLimitManager:
                     timestamp REAL
                 )
             """)
-            print("DB setup")
             await db.commit()
+            print("Ban limits DB setup")
 
     # Check if a moderator can ban & record if allowed
     async def try_ban(self, user_id: int) -> bool:
@@ -75,8 +76,8 @@ class PointsManager:
                 )
                 """
             )
-            print("PointsManager DB setup")
             await db.commit()
+            print("PointsManager DB setup")
 
     async def add_points(self, guild_id: int, user_id: int, amount: int) -> int:
         """
@@ -178,3 +179,68 @@ class PointsManager:
             ) as cursor:
                 rows = await cursor.fetchall()
                 return [(row[0], row[1]) for row in rows]
+
+
+class WelcomeRoleManager:
+    def __init__(self, db_path: str = "data/ban_limits.db"):
+        self.db_path = db_path
+
+    async def setup(self):
+        async with aiosqlite.connect(self.db_path) as db:
+            await db.execute(
+                """
+                CREATE TABLE IF NOT EXISTS welcome_roles (
+                    guild_id INTEGER NOT NULL,
+                    user_id  INTEGER NOT NULL,
+                    role_id  INTEGER NOT NULL,
+                    remove_at REAL NOT NULL,
+                    PRIMARY KEY (guild_id, user_id, role_id)
+                )
+                """
+            )
+            await db.commit()
+
+    async def schedule_removal(
+        self,
+        guild_id: int,
+        user_id: int,
+        role_id: int,
+        days: int = 7,
+    ):
+        remove_at = (datetime.utcnow() + timedelta(days=days)).timestamp()
+
+        async with aiosqlite.connect(self.db_path) as db:
+            await db.execute(
+                """
+                INSERT OR REPLACE INTO welcome_roles
+                (guild_id, user_id, role_id, remove_at)
+                VALUES (?, ?, ?, ?)
+                """,
+                (guild_id, user_id, role_id, remove_at),
+            )
+            await db.commit()
+            print("Welcome Role DB setup")
+
+    async def get_due_removals(self):
+        now = datetime.utcnow().timestamp()
+        async with aiosqlite.connect(self.db_path) as db:
+            cursor = await db.execute(
+                """
+                SELECT guild_id, user_id, role_id
+                FROM welcome_roles
+                WHERE remove_at <= ?
+                """,
+                (now,),
+            )
+            return await cursor.fetchall()
+
+    async def delete_entry(self, guild_id: int, user_id: int, role_id: int):
+        async with aiosqlite.connect(self.db_path) as db:
+            await db.execute(
+                """
+                DELETE FROM welcome_roles
+                WHERE guild_id = ? AND user_id = ? AND role_id = ?
+                """,
+                (guild_id, user_id, role_id),
+            )
+            await db.commit()

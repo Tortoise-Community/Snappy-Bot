@@ -41,7 +41,7 @@ verified_role_id = 599647985198039050
 trusted_role_id = 703657957438652476
 moderator_role = 577368219875278849
 admin_role = 577196762691928065
-new_member_role = 743751537305845813
+new_member_role = 1441848294828670978
 
 # Keys are IDs of reaction emojis
 # Values are role IDs which will get added if that reaction gets added/removed
