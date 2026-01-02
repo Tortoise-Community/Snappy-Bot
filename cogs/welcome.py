@@ -33,7 +33,7 @@ class Welcome(commands.Cog):
             try:
                 await channel.send(
                     content=f"Hi {member.mention}! Welcome to our server.",
-                    delete_after=120,
+                    delete_after=80,
                 )
             except discord.Forbidden:
                 pass
@@ -70,6 +70,26 @@ class Welcome(commands.Cog):
                 icon_url="https://lairesit.sirv.com/Images/tortoise.png",
             )
             await member.send(embed=dm_embed)
+        except discord.Forbidden:
+            pass
+
+    @commands.Cog.listener()
+    async def on_member_remove(self, member: discord.Member):
+        guild = member.guild
+        if guild is None or guild.id != constants.tortoise_guild_id:
+            return
+
+        channel = guild.get_channel(constants.bot_dev_channel_id)
+        if channel is None:
+            return
+        try:
+            await channel.send(
+                content=(
+                    f"👋 **Member Left**\n"
+                    f"User: **{member.display_name}**  (`{member.id}`)\n"
+                    f"Account created: <t:{int(member.created_at.timestamp())}:R>"
+                )
+            )
         except discord.Forbidden:
             pass
 
