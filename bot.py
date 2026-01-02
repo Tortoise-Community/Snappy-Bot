@@ -30,7 +30,7 @@ class MyBot(commands.Bot):
         await self.leaderboard_manager.setup()
         await self.load_extension("cogs.moderation")
         await self.load_extension("cogs.leaderboard")
-        # await self.load_extension("cogs.advent_of_code")
+        await self.load_extension("cogs.challenge_notifications")
         await self.load_extension("cogs.welcome")
         await self.load_extension("cogs.status")
         guild = discord.Object(id=GUILD_ID)
