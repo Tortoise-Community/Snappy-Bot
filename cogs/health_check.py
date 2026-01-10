@@ -121,7 +121,7 @@ class HealthCheck(commands.Cog):
 
 
 async def setup(bot: commands.Bot):
-    host = config("HEALTH_HOST", "0.0.0.0")
-    port = config("HEALTH_PORT", "8080", cast=int)
+    host = config("HOST", "0.0.0.0")
+    port = config("PORT", "8080", cast=int)
 
     await bot.add_cog(HealthCheck(bot, host=host, port=port))
