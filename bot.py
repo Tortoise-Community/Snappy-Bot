@@ -43,6 +43,7 @@ class MyBot(commands.Bot):
         await self.load_extension("cogs.challenge_notifications")
         await self.load_extension("cogs.welcome")
         await self.load_extension("cogs.status")
+        await self.load_extension("cogs.health_check")
 
         await self.tree.sync()
         print("✅ Synced application commands")
