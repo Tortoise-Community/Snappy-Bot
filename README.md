@@ -40,8 +40,8 @@ Snappy exists to fill that gap. It provides the **essential moderation and commu
 ```env
 DISCORD_BOT_TOKEN=your_bot_token
 DB_URL=postgresql://user:password@host:port/database
-HEALTH_HOST=0.0.0.0
-HEALTH_PORT=8080
+HOST=0.0.0.0
+PORT=8080
 ```
 
 ### Running the Bot

@@ -12,6 +12,9 @@ from discord.ext import commands
 from aiohttp import web
 from decouple import config
 
+import constants
+
+
 class HealthCheck(commands.Cog):
     """
     Exposes health endpoints for monitoring the bot.
@@ -29,14 +32,14 @@ class HealthCheck(commands.Cog):
 
         self.start_time = time.time()
 
-        self.rate_limit_window = timedelta(minutes=5)
+        self.rate_limit_window = timedelta(minutes=constants.rate_limit_minutes)
         self.client_last_seen: Dict[str, datetime] = {}
 
         self.app = web.Application()
         self.app.add_routes(
             [
                 web.get("/health", self.health),
-                web.get("/ready", self.ready),
+                web.head("/ready", self.ready),
             ]
         )
 
@@ -70,7 +73,7 @@ class HealthCheck(commands.Cog):
             return web.json_response(
                 {
                     "status": "rate_limited",
-                    "retry_after_minutes": 30,
+                    "retry_after_minutes": constants.rate_limit_minutes,
                 },
                 status=429,
             )

@@ -101,8 +101,4 @@ embed_space = "\u200b "
 # After this is exceeded the link to tortoise paste service should be sent
 max_message_length = 1000
 
-
-
-
-
-
+rate_limit_minutes = 5
