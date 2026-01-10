@@ -5,6 +5,7 @@ from decouple import config
 from discord.ext import commands
 
 from utils.manager import BanLimitManager, PointsManager
+from health_check import health_check
 
 TOKEN = config("DISCORD_BOT_TOKEN")
 GUILD_ID = 577192344529404154
@@ -67,6 +68,6 @@ async def main():
     async with bot:
         await bot.start(TOKEN)
 
-
+health_check()
 if __name__ == "__main__":
     asyncio.run(main())

@@ -2,3 +2,4 @@ discord.py
 aiosqlite
 aiohttp
 python-decouple
+flask
