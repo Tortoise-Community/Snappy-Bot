@@ -4,6 +4,8 @@ import discord
 from discord.ext import commands
 from discord import app_commands
 
+import constants
+
 
 class Moderation(commands.Cog):
     """This cog is to be removed after Tortoise bot is back online"""
@@ -14,7 +16,7 @@ class Moderation(commands.Cog):
         name="ban",
         description="Ban a member from the server.",
     )
-    @app_commands.checks.has_role(577368219875278849)
+    @app_commands.checks.has_role(constants.moderator_role)
     async def ban(
         self,
         interaction: discord.Interaction,
@@ -60,12 +62,10 @@ class Moderation(commands.Cog):
                 dm_text += f"\nReason: {reason}"
             await member.send(dm_text)
         except:
-            pass  # DM closed, ignore
+            pass
 
-        # Perform the ban
         try:
             await guild.ban(member, reason=reason)
-            pass
         except discord.Forbidden:
             await interaction.followup.send("I don't have permission to ban that member.")
             return

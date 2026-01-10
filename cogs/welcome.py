@@ -4,9 +4,6 @@ import discord
 from discord.ext import commands, tasks
 import constants
 
-from utils.manager import WelcomeRoleManager
-
-WELCOME_CHANNEL_ID = 577192344533598472
 WELCOME_ROLE_DURATION_DAYS = 7
 
 
@@ -15,7 +12,7 @@ class Welcome(commands.Cog):
 
     def __init__(self, bot: commands.Bot):
         self.bot = bot
-        self.manager = WelcomeRoleManager()
+        self.manager = bot.welcome_role_manager
         self.remove_welcome_roles.start()
 
     @commands.Cog.listener()
@@ -28,7 +25,7 @@ class Welcome(commands.Cog):
         if welcome_role is None:
             return
 
-        channel = guild.get_channel(WELCOME_CHANNEL_ID) or guild.system_channel
+        channel = guild.get_channel(constants.general_channel_id) or guild.system_channel
         if channel:
             try:
                 await channel.send(
@@ -93,7 +90,6 @@ class Welcome(commands.Cog):
         except discord.Forbidden:
             pass
 
-    # -------- Background task --------
 
     @tasks.loop(hours=6)
     async def remove_welcome_roles(self):
@@ -113,7 +109,6 @@ class Welcome(commands.Cog):
                 except discord.Forbidden:
                     pass
                 except Exception:
-                    # account for users who've already left
                     pass
 
             await self.manager.delete_entry(guild_id, user_id, role_id)
