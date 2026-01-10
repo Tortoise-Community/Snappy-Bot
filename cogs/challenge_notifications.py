@@ -4,7 +4,7 @@ import discord
 from discord.ext import commands
 from discord import app_commands
 
-NOTIFICATION_ROLE_ID = 781210603997757471
+import constants
 
 
 class NotifyButton(discord.ui.View):
@@ -31,7 +31,7 @@ class NotifyButton(discord.ui.View):
             )
             return
 
-        role = interaction.guild.get_role(NOTIFICATION_ROLE_ID)
+        role = interaction.guild.get_role(constants.challenger_role)
         if role is None:
             await interaction.response.send_message(
                 "Notification role is not configured correctly.",
