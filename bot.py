@@ -61,9 +61,9 @@ async def send_restart_message(client: commands.Bot):
             stderr=subprocess.DEVNULL,
         ).decode().strip()
     except Exception:
-        commit_hash = "unknown"
+        commit_hash = config("BOT_BUILD_VERSION", "mystery-build")
 
-    channel = client.get_channel(constants.bot_log_channel_id)
+    channel = client.get_channel(constants.bot_dev_channel_id)
     if channel is None:
         return
 
@@ -80,6 +80,7 @@ async def send_restart_message(client: commands.Bot):
 async def on_ready():
     print(f"✅ Logged in as {bot.user} (ID: {bot.user.id})")
     await send_restart_message(bot)
+
 
 @bot.event
 async def on_message(message: discord.Message):
