@@ -34,6 +34,8 @@ error_log_channel_id = 690650346665803777
 member_count_channel_id = 723526255495872566
 general_channel_id = 577192344533598472
 staff_channel_id = 580809054067097600
+leetcode_channel_id = 726403782740541470
+challenges_channel_id = 780841435712716800
 
 # Roles
 muted_role_id = 707007421066772530

@@ -55,9 +55,9 @@ class Welcome(commands.Cog):
             dm_embed = discord.Embed(
                 title=f"Welcome to {guild.name}!",
                 description=(
-                    "Introduce yourself in <#577192344533598472>\n\n"
-                    "Leetcode discussion <#1455600810586280069>\n\n"
-                    "For **Leetcode challenges** checkout <#780841435712716800>\n\n\n"
+                    f"Introduce yourself in <#{constants.general_channel_id}>\n\n"
+                    f"Leetcode discussion <#{constants.leetcode_channel_id}>\n\n"
+                    f"For **Leetcode challenges** checkout <#{constants.challenges_channel_id}>\n\n\n"
                     + content_footer
                 ),
                 color=discord.Color.green(),
@@ -83,7 +83,8 @@ class Welcome(commands.Cog):
             await channel.send(
                 content=(
                     f"👋 **Member Left**\n"
-                    f"User: **{member.display_name}**  (`{member.id}`)\n"
+                    f"User: **{member.global_name}** (`{member.id}`)\n"
+                    f"Joined at: <t:{int(member.joined_at.timestamp())}:R>\n"
                     f"Account created: <t:{int(member.created_at.timestamp())}:R>"
                 )
             )

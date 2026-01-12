@@ -1,8 +1,12 @@
+import subprocess
+
 import asyncio
 import discord
 from decouple import config
 from discord.ext import commands
+from utils.embed_handler import simple_embed
 
+import constants
 from utils.manager import (
     BanLimitManager,
     PointsManager,
@@ -12,7 +16,6 @@ from utils.manager import (
 
 TOKEN = config("DISCORD_BOT_TOKEN")
 DB_URL = config("DB_URL")
-GUILD_ID = 577192344529404154
 
 
 class MyBot(commands.Bot):
@@ -51,11 +54,32 @@ class MyBot(commands.Bot):
 
 bot = MyBot()
 
+async def send_restart_message(client: commands.Bot):
+    try:
+        commit_hash = subprocess.check_output(
+            ["git", "rev-parse", "--short", "HEAD"],
+            stderr=subprocess.DEVNULL,
+        ).decode().strip()
+    except Exception:
+        commit_hash = "unknown"
+
+    channel = client.get_channel(constants.bot_log_channel_id)
+    if channel is None:
+        return
+
+    try:
+        embed = simple_embed(message=f"🔄 **Bot restarted**\nBuild version: `{commit_hash}`", title="", color=discord.Color.dark_green())
+        await channel.send(
+            embed=embed,
+        )
+    except discord.Forbidden:
+        pass
+
 
 @bot.event
 async def on_ready():
     print(f"✅ Logged in as {bot.user} (ID: {bot.user.id})")
-
+    await send_restart_message(bot)
 
 @bot.event
 async def on_message(message: discord.Message):
