@@ -83,6 +83,7 @@ class HealthCheck(commands.Cog):
 
         data = {
             "status": "ok",
+            "build_version": self.bot.build_version,
             "uptime_seconds": int(time.time() - self.start_time),
             "latency_ms": round(self.bot.latency * 1000, 2),
             "guilds": len(self.bot.guilds),

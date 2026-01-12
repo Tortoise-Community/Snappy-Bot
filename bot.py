@@ -20,6 +20,11 @@ DB_URL = config("DB_URL")
 
 class MyBot(commands.Bot):
     def __init__(self):
+        self.db = None
+        self.welcome_role_manager = None
+        self.points_manager = None
+        self.ban_manager = None
+        self.build_version = None
         intents = discord.Intents.default()
         intents.members = True
 
@@ -64,6 +69,8 @@ async def send_restart_message(client: commands.Bot):
         commit_hash = config("BOT_BUILD_VERSION", "mystery-build")
 
     channel = client.get_channel(constants.bot_dev_channel_id)
+    client.build_version = commit_hash
+
     if channel is None:
         return
 
