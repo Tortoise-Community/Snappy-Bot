@@ -5,7 +5,7 @@ from collections import defaultdict, deque
 
 import discord
 from discord.ext import commands
-from constants import bot_dev_channel_id
+from constants import bot_dev_channel_id, bait_channel_id
 
 
 class AntiRaidSpam(commands.Cog):
@@ -31,8 +31,14 @@ class AntiRaidSpam(commands.Cog):
 
         member = message.author
         guild = message.guild
+        now = time.time()
 
         if member.guild_permissions.manage_messages:
+            return
+
+        if message.channel.id == bait_channel_id:
+            await self.handle_raid(member, message, [(now, bait_channel_id, message.content),])
+            self.message_log[guild.id].pop(member.id, None)
             return
 
         if not member.joined_at:
@@ -42,7 +48,6 @@ class AntiRaidSpam(commands.Cog):
         if join_age > self.JOIN_GRACE_PERIOD:
             return
 
-        now = time.time()
         logs = self.message_log[guild.id][member.id]
 
         content = self.extract_message_content(message)
@@ -57,6 +62,7 @@ class AntiRaidSpam(commands.Cog):
         if len(unique_channels) >= self.CHANNEL_THRESHOLD:
             await self.handle_raid(member, message, list(logs))
             self.message_log[guild.id].pop(member.id, None)
+
 
 
     def extract_message_content(self, message: discord.Message) -> str:

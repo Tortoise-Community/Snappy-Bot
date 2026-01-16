@@ -36,6 +36,7 @@ general_channel_id = 577192344533598472
 staff_channel_id = 580809054067097600
 leetcode_channel_id = 726403782740541470
 challenges_channel_id = 780841435712716800
+bait_channel_id = 1461666781612740750
 
 # Roles
 muted_role_id = 707007421066772530
