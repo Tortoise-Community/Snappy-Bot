@@ -12,6 +12,59 @@ class Moderation(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
+
+    @app_commands.command(
+        name="clear",
+        description="Clear messages from a channel (admin only).",
+    )
+    @app_commands.describe(
+        amount="Number of messages to delete (1–100)"
+    )
+    @app_commands.checks.has_permissions(administrator=True)
+    async def clear(
+        self,
+        interaction: discord.Interaction,
+        amount: int,
+    ):
+        if amount < 1 or amount > 100:
+            await interaction.response.send_message(
+                "Amount must be between 1 and 100.",
+                ephemeral=True,
+            )
+            return
+
+        channel = interaction.channel
+        if not isinstance(channel, discord.TextChannel):
+            await interaction.response.send_message(
+                "This command can only be used in text channels.",
+                ephemeral=True,
+            )
+            return
+
+        await interaction.response.defer(ephemeral=True)
+
+        deleted = await channel.purge(limit=amount)
+
+        await interaction.followup.send(
+            f"🧹 Deleted **{len(deleted)}** messages in {channel.mention}.",
+            ephemeral=True,
+        )
+
+    @clear.error
+    async def clear_error(
+        self,
+        interaction: discord.Interaction,
+        error: app_commands.AppCommandError,
+    ):
+        if isinstance(error, app_commands.MissingPermissions):
+            await interaction.response.send_message(
+                "You must be an administrator to use this command.",
+                ephemeral=True,
+            )
+            return
+        raise error
+
+
     @app_commands.command(
         name="ban",
         description="Ban a member from the server.",
