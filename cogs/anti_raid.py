@@ -7,72 +7,104 @@ import discord
 from discord.ext import commands
 from constants import bot_dev_channel_id
 
+
 class AntiRaidSpam(commands.Cog):
     """
     Bans users who spam messages across multiple channels shortly after joining.
     """
 
-    JOIN_GRACE_PERIOD = 8 * 60        # seconds since joining (5 minutes)
-    CHANNEL_THRESHOLD = 4             # number of distinct channels
+    JOIN_GRACE_PERIOD = 8 * 60        # seconds since joining
+    CHANNEL_THRESHOLD = 3             # distinct channels
     SPAM_WINDOW = 30                  # seconds
     BAN_REASON = "Raid protection: multi-channel spam on join"
+    APPEAL_SERVER_URL = "https://discord.gg/X9aQKymWpk"
 
     def __init__(self, bot: commands.Bot):
         self.bot = bot
-        # guild_id -> user_id -> deque[(timestamp, channel_id)]
         self.message_log = defaultdict(lambda: defaultdict(deque))
+
 
     @commands.Cog.listener()
     async def on_message(self, message: discord.Message):
-        if message.author.bot:
-            return
-
-        if message.guild is None:
+        if message.author.bot or message.guild is None:
             return
 
         member = message.author
         guild = message.guild
 
-        # Ignore moderators
         if member.guild_permissions.manage_messages:
             return
 
-        # Ensure joined_at exists
         if not member.joined_at:
             return
 
-        now = time.time()
         join_age = (discord.utils.utcnow() - member.joined_at).total_seconds()
-
-        # Only enforce for new joins
         if join_age > self.JOIN_GRACE_PERIOD:
             return
 
+        now = time.time()
         logs = self.message_log[guild.id][member.id]
-        logs.append((now, message.channel.id))
 
-        # Drop old entries
+        content = self.extract_message_content(message)
+        logs.append((now, message.channel.id, content))
+
+        # Remove old entries
         while logs and now - logs[0][0] > self.SPAM_WINDOW:
             logs.popleft()
 
-        # Count unique channels
-        unique_channels = {cid for _, cid in logs}
+        unique_channels = {cid for _, cid, _ in logs}
 
         if len(unique_channels) >= self.CHANNEL_THRESHOLD:
-            await self.ban_member(member, message)
+            await self.handle_raid(member, message, list(logs))
             self.message_log[guild.id].pop(member.id, None)
 
 
-    async def ban_member(self, member: discord.Member, message: discord.Message):
+    def extract_message_content(self, message: discord.Message) -> str:
+        """
+        Extract meaningful content from a Discord message.
+        Covers text, embeds, attachments, and stickers.
+        """
+
+        parts: list[str] = []
+
+        if message.clean_content:
+            parts.append(message.clean_content.strip())
+
+        for attachment in message.attachments:
+            parts.append(f"[Attachment] {attachment.url}")
+
+        for embed in message.embeds:
+            if embed.url:
+                parts.append(f"[Embed URL] {embed.url}")
+            elif embed.title or embed.description:
+                preview = (embed.title or embed.description or "").strip()
+                if preview:
+                    parts.append(f"[Embed] {preview[:200]}")
+
+        if message.stickers:
+            parts.append("[Sticker]")
+
+        if not parts:
+            return "[Empty message payload]"
+
+        return " | ".join(parts)[:500]
+
+
+    async def handle_raid(
+        self,
+        member: discord.Member,
+        message: discord.Message,
+        logs: list[tuple[float, int, str]],
+    ):
         guild = member.guild
 
-        # Delete triggering message
+        await self.send_dm_notice(member, guild)
+
         try:
             await message.delete()
         except discord.Forbidden:
             pass
 
-        # Ban user
         try:
             await guild.ban(
                 member,
@@ -82,14 +114,73 @@ class AntiRaidSpam(commands.Cog):
         except discord.Forbidden:
             return
 
+        await self.log_to_mod_channel(guild, member, logs)
+
+
+    async def send_dm_notice(self, member: discord.Member, guild: discord.Guild):
+        embed = discord.Embed(
+            title="You have been automatically banned",
+            description=(
+                f"You were banned from **{guild.name}** due to **automated raid protection**.\n\n"
+                "Our system flagged your activity as spam-like behavior after joining.\n\n"
+                "**If this was a mistake**, you may appeal using the link below."
+            ),
+            color=discord.Color.red(),
+        )
+        embed.add_field(
+            name="Appeal",
+            value=f"[Join the appeal server]({self.APPEAL_SERVER_URL})",
+            inline=False,
+        )
+        embed.set_footer(text="This action was performed automatically 💠 Tortoise Community")
+
+        try:
+            await member.send(embed=embed)
+        except discord.Forbidden:
+            pass
+
+
+    async def log_to_mod_channel(
+        self,
+        guild: discord.Guild,
+        member: discord.Member,
+        logs: list[tuple[float, int, str]],
+    ):
         channel = guild.get_channel(bot_dev_channel_id)
-        if channel:
-            await channel.send(
-                f"🚨 **Raid Ban Triggered**\n"
-                f"User: `{member}` (`{member.id}`)\n"
-                f"Joined: <t:{int(member.joined_at.timestamp())}:R>\n"
-                f"Reason: {self.BAN_REASON}"
-            )
+        if channel is None:
+            return
+
+        lines = []
+        for _, channel_id, content in logs:
+            ch = guild.get_channel(channel_id)
+            ch_name = f"#{ch.name}" if ch else f"#{channel_id}"
+            lines.append(f"**{ch_name}:** {content}")
+
+        embed = discord.Embed(
+            title="🚨 Raid Ban Triggered",
+            color=discord.Color.orange(),
+        )
+        embed.add_field(
+            name="User",
+            value=f"{member} (`{member.id}`)",
+            inline=False,
+        )
+        embed.add_field(
+            name="Joined",
+            value=f"<t:{int(member.joined_at.timestamp())}:R>",
+            inline=False,
+        )
+        embed.add_field(
+            name="Messages",
+            value="\n".join(lines),
+            inline=False,
+        )
+        embed.set_footer(text=self.BAN_REASON)
+
+        try:
+            await channel.send(embed=embed)
+        except discord.Forbidden:
+            pass
 
 
 async def setup(bot: commands.Bot):
