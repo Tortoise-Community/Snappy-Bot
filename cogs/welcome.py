@@ -83,8 +83,8 @@ class Welcome(commands.Cog):
             await channel.send(
                 content=(
                     f"👋 **Member Left**\n"
-                    f"User: **{member.global_name}** (`{member.id}`)\n"
-                    f"Joined at: <t:{int(member.joined_at.timestamp())}:R>\n"
+                    f"User: **{member.name}** (`{member.id}`)\n"
+                    f"Joined server: <t:{int(member.joined_at.timestamp())}:R>\n"
                     f"Account created: <t:{int(member.created_at.timestamp())}:R>"
                 )
             )
