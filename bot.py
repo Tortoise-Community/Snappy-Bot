@@ -53,6 +53,7 @@ class MyBot(commands.Bot):
         await self.load_extension("cogs.status")
         await self.load_extension("cogs.health_check")
         await self.load_extension("cogs.anti_raid")
+        await self.load_extension("cogs.logging")
 
         await self.tree.sync()
         print("✅ Synced application commands")
