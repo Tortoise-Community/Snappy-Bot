@@ -5,7 +5,7 @@ from collections import defaultdict, deque
 
 import discord
 from discord.ext import commands
-from constants import bot_dev_channel_id, bait_channel_id
+from constants import system_log_channel_id, bait_channel_id
 
 
 class AntiRaidSpam(commands.Cog):
@@ -152,7 +152,7 @@ class AntiRaidSpam(commands.Cog):
         member: discord.Member,
         logs: list[tuple[float, int, str]],
     ):
-        channel = guild.get_channel(bot_dev_channel_id)
+        channel = guild.get_channel(system_log_channel_id)
         if channel is None:
             return
 

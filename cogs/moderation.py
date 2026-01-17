@@ -4,7 +4,7 @@ import discord
 from discord.ext import commands
 from discord import app_commands
 
-import constants
+from constants import moderator_role
 
 
 class Moderation(commands.Cog):
@@ -69,7 +69,7 @@ class Moderation(commands.Cog):
         name="ban",
         description="Ban a member from the server.",
     )
-    @app_commands.checks.has_role(constants.moderator_role)
+    @app_commands.checks.has_role(moderator_role)
     async def ban(
         self,
         interaction: discord.Interaction,

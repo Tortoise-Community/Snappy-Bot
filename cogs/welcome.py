@@ -76,7 +76,7 @@ class Welcome(commands.Cog):
         if guild is None or guild.id != constants.tortoise_guild_id:
             return
 
-        channel = guild.get_channel(constants.bot_dev_channel_id)
+        channel = guild.get_channel(constants.system_log_channel_id)
         if channel is None:
             return
         try:

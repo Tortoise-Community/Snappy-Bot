@@ -6,7 +6,7 @@ from decouple import config
 from discord.ext import commands
 from utils.embed_handler import simple_embed
 
-from constants import bot_dev_channel_id
+from constants import system_log_channel_id
 from utils.manager import (
     BanLimitManager,
     PointsManager,
@@ -69,7 +69,7 @@ async def send_restart_message(client: commands.Bot):
     except Exception:
         commit_hash = config("BOT_BUILD_VERSION", "mystery-build")
 
-    channel = client.get_channel(bot_dev_channel_id)
+    channel = client.get_channel(system_log_channel_id)
     client.build_version = commit_hash
 
     if channel is None:
