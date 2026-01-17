@@ -29,6 +29,7 @@ class MyBot(commands.Bot):
         intents.members = True
         intents.message_content = True
         intents.messages = True
+        self.suppressed_deletes: set[int] = set()
 
         super().__init__(
             command_prefix="!",

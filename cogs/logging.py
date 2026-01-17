@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import discord
 from discord.ext import commands
+
+from bot import MyBot
 from constants import tortoise_guild_id, system_log_channel_id
 
 
@@ -10,13 +12,17 @@ class Logging(commands.Cog):
     Logs deleted messages (single and bulk) to a moderation channel.
     """
 
-    def __init__(self, bot: commands.Bot):
+    def __init__(self, bot: MyBot):
         self.bot = bot
         print("Logging cog initialized")
 
     @commands.Cog.listener()
     async def on_message_delete(self, message: discord.Message):
-        if message.guild.id is not tortoise_guild_id or message.author is None or message.author.bot:
+        if message.guild.id != tortoise_guild_id or message.author is None or message.author.bot:
+            return
+
+        if message.id in self.bot.suppressed_deletes:
+            self.bot.suppressed_deletes.discard(message.id)
             return
 
         channel = message.guild.get_channel(system_log_channel_id)
@@ -56,8 +62,18 @@ class Logging(commands.Cog):
         if not messages:
             return
 
+        filtered = []
+        for msg in messages:
+            if msg.id in self.bot.suppressed_deletes:
+                self.bot.suppressed_deletes.discard(msg.id)
+                continue
+            filtered.append(msg)
+
+        if not filtered:
+            return
+
         guild = messages[0].guild
-        if guild.id is not tortoise_guild_id :
+        if guild.id != tortoise_guild_id :
             return
 
         channel = guild.get_channel(system_log_channel_id)
@@ -105,7 +121,6 @@ class Logging(commands.Cog):
             except discord.Forbidden:
                 pass
 
-    # ---------------- CONTENT EXTRACTION ----------------
 
     @staticmethod
     def extract_content(message: discord.Message) -> str:

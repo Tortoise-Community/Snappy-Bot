@@ -5,6 +5,8 @@ from collections import defaultdict, deque
 
 import discord
 from discord.ext import commands
+
+from bot import MyBot
 from constants import system_log_channel_id, bait_channel_id
 
 
@@ -19,7 +21,7 @@ class AntiRaidSpam(commands.Cog):
     BAN_REASON = "Raid protection: multi-channel spam on join"
     APPEAL_SERVER_URL = "https://discord.gg/X9aQKymWpk"
 
-    def __init__(self, bot: commands.Bot):
+    def __init__(self, bot: MyBot):
         self.bot = bot
         self.message_log = defaultdict(lambda: defaultdict(deque))
 
@@ -37,7 +39,7 @@ class AntiRaidSpam(commands.Cog):
             return
 
         if message.channel.id == bait_channel_id:
-            await self.handle_raid(member, message, [(now, bait_channel_id, message.content),])
+            await self.handle_raid(member, message, [(now, bait_channel_id, message.content, message.id),])
             self.message_log[guild.id].pop(member.id, None)
             return
 
@@ -51,13 +53,13 @@ class AntiRaidSpam(commands.Cog):
         logs = self.message_log[guild.id][member.id]
 
         content = self.extract_message_content(message)
-        logs.append((now, message.channel.id, content))
+        logs.append((now, message.channel.id, content, message.id))
 
         # Remove old entries
         while logs and now - logs[0][0] > self.SPAM_WINDOW:
             logs.popleft()
 
-        unique_channels = {cid for _, cid, _ in logs}
+        unique_channels = {cid for _, cid, _, _ in logs}
 
         if len(unique_channels) >= self.CHANNEL_THRESHOLD:
             await self.handle_raid(member, message, list(logs))
@@ -100,9 +102,15 @@ class AntiRaidSpam(commands.Cog):
         self,
         member: discord.Member,
         message: discord.Message,
-        logs: list[tuple[float, int, str]],
+        logs: list[tuple[float, int, str, int]],
     ):
         guild = member.guild
+
+        try:
+            for log in logs:
+                self.bot.suppressed_deletes.add(log[3])
+        except IndexError:
+            pass
 
         await self.send_dm_notice(member, guild)
 
@@ -150,14 +158,14 @@ class AntiRaidSpam(commands.Cog):
         self,
         guild: discord.Guild,
         member: discord.Member,
-        logs: list[tuple[float, int, str]],
+        logs: list[tuple[float, int, str, int]],
     ):
         channel = guild.get_channel(system_log_channel_id)
         if channel is None:
             return
 
         lines = []
-        for _, channel_id, content in logs:
+        for _, channel_id, content, _ in logs:
             ch = guild.get_channel(channel_id)
             ch_name = f"#{ch.name}" if ch else f"#{channel_id}"
             lines.append(f"**{ch_name}:** {content}")
