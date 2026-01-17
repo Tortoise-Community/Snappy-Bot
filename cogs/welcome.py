@@ -3,23 +3,31 @@ from __future__ import annotations
 import discord
 from discord.ext import commands, tasks
 import constants
+from datetime import time as dtime, timezone
 
 WELCOME_ROLE_DURATION_DAYS = 7
 
 
 class Welcome(commands.Cog):
-    """Send a welcome message and manage temporary welcome role."""
+    """Send a welcome message, manage temporary welcome role, and track daily retention."""
 
     def __init__(self, bot: commands.Bot):
         self.bot = bot
         self.manager = bot.welcome_role_manager
+
+        self.joins_today = 0
+        self.leaves_today = 0
+
         self.remove_welcome_roles.start()
+        self.daily_retention_report.start()
 
     @commands.Cog.listener()
     async def on_member_join(self, member: discord.Member):
         guild = member.guild
         if guild is None or guild.id != constants.tortoise_guild_id:
             return
+
+        self.joins_today += 1
 
         welcome_role = guild.get_role(constants.new_member_role)
         if welcome_role is None:
@@ -89,6 +97,8 @@ class Welcome(commands.Cog):
         if guild is None or guild.id != constants.tortoise_guild_id:
             return
 
+        self.leaves_today += 1
+
         channel = guild.get_channel(constants.system_log_channel_id)
         if channel is None:
             return
@@ -104,6 +114,47 @@ class Welcome(commands.Cog):
         except discord.Forbidden:
             pass
 
+    @tasks.loop(time=dtime(hour=0, minute=0, tzinfo=timezone.utc))
+    async def daily_retention_report(self):
+        guild = self.bot.get_guild(constants.tortoise_guild_id)
+        if not guild:
+            return
+
+        channel = guild.get_channel(constants.system_log_channel_id)
+        if not channel:
+            return
+
+        net_change = self.joins_today - self.leaves_today
+
+        if net_change > 0:
+            emoji = "📈"
+            value = f"+{net_change}"
+        elif net_change < 0:
+            emoji = "📉"
+            value = str(net_change)
+        else:
+            emoji = "➖"
+            value = "0"
+
+        try:
+            await channel.send(
+                content=(
+                    f"{emoji} **Daily Member Retention**\n"
+                    f"Joins: **{self.joins_today}**\n"
+                    f"Leaves: **{self.leaves_today}**\n"
+                    f"Net change: **{value}**"
+                )
+            )
+        except discord.Forbidden:
+            pass
+
+        self.joins_today = 0
+        self.leaves_today = 0
+
+
+    @daily_retention_report.before_loop
+    async def before_daily_retention_report(self):
+        await self.bot.wait_until_ready()
 
     @tasks.loop(hours=6)
     async def remove_welcome_roles(self):
