@@ -4,7 +4,7 @@ import os
 import time
 import platform
 from datetime import datetime, timedelta
-from typing import Dict
+from typing import Dict, List
 
 import psutil
 import discord
@@ -24,7 +24,7 @@ class HealthCheck(commands.Cog):
         self,
         bot: commands.Bot,
         host: str = "0.0.0.0",
-        port: int = "8080",
+        port: int = 8080,
     ):
         self.bot = bot
         self.host = host
@@ -33,7 +33,8 @@ class HealthCheck(commands.Cog):
         self.start_time = time.time()
 
         self.rate_limit_window = timedelta(minutes=constants.rate_limit_minutes)
-        self.client_last_seen: Dict[str, datetime] = {}
+        self.max_requests = 2
+        self.client_requests: Dict[str, List[datetime]] = {}
 
         self.app = web.Application()
         self.app.add_routes(
@@ -59,12 +60,18 @@ class HealthCheck(commands.Cog):
         client_ip = client_ip.split(",")[0].strip()
 
         now = datetime.utcnow()
-        last_seen = self.client_last_seen.get(client_ip)
+        window_start = now - self.rate_limit_window
 
-        if last_seen and (now - last_seen) < self.rate_limit_window:
+        timestamps = self.client_requests.get(client_ip, [])
+
+        timestamps = [t for t in timestamps if t > window_start]
+
+        if len(timestamps) >= self.max_requests:
+            self.client_requests[client_ip] = timestamps
             return True
 
-        self.client_last_seen[client_ip] = now
+        timestamps.append(now)
+        self.client_requests[client_ip] = timestamps
         return False
 
 

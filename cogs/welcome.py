@@ -26,6 +26,8 @@ class Welcome(commands.Cog):
             return
 
         channel = guild.get_channel(constants.general_channel_id) or guild.system_channel
+        log_channel = guild.get_channel(constants.system_log_channel_id)
+
         if channel:
             try:
                 await channel.send(
@@ -34,6 +36,17 @@ class Welcome(commands.Cog):
                 )
             except discord.Forbidden:
                 pass
+
+        try:
+            await log_channel.send(
+                content=(
+                    f"👋 **Member Joined**\n"
+                    f"User: **{member.name}** (`{member.id}`)\n"
+                    f"Account created: <t:{int(member.created_at.timestamp())}:R>"
+                )
+            )
+        except discord.Forbidden:
+            pass
 
         try:
             await member.add_roles(welcome_role, reason="Welcome role added")
