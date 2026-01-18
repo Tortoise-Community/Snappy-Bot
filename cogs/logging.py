@@ -14,7 +14,6 @@ class Logging(commands.Cog):
 
     def __init__(self, bot: MyBot):
         self.bot = bot
-        print("Logging cog initialized")
 
     @commands.Cog.listener()
     async def on_message_delete(self, message: discord.Message):

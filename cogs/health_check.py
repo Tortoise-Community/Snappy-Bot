@@ -122,7 +122,7 @@ class HealthCheck(commands.Cog):
         self.site = web.TCPSite(self.runner, self.host, self.port)
         await self.site.start()
 
-        print(f"Health check server running on http://{self.host}:{self.port}")
+        print(f"🫀Health checks available at http://{self.host}:{self.port}")
 
     async def cog_unload(self):
         if self.site:

@@ -32,7 +32,6 @@ class BanLimitManager:
             )
             """
         )
-        print("Ban limits table ready")
 
     async def try_ban(self, user_id: int) -> bool:
         now = datetime.utcnow()
@@ -80,7 +79,6 @@ class PointsManager:
             )
             """
         )
-        print("Points table ready")
 
     async def add_points(self, guild_id: int, user_id: int, amount: int) -> int:
         row = await self.db.pool.fetchrow(
@@ -153,7 +151,6 @@ class WelcomeRoleManager:
             )
             """
         )
-        print("Welcome roles table ready")
 
     async def schedule_removal(
         self,
