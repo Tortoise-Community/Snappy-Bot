@@ -7,22 +7,29 @@ import discord
 from discord.ext import commands
 
 from bot import MyBot
-from constants import system_log_channel_id, bait_channel_id
+from constants import system_log_channel_id, bait_channel_id, new_member_role
 
 
 class AntiRaidSpam(commands.Cog):
     """
-    Bans users who spam messages across multiple channels shortly after joining.
+    Bans users who spam messages across multiple channels.
+
+    Trust model:
+    - Users with the new member role are treated as untrusted.
+    - Protection automatically expires when the role is removed.
     """
 
-    JOIN_GRACE_PERIOD = 8 * 60        # seconds since joining
-    CHANNEL_THRESHOLD = 3             # distinct channels
-    SPAM_WINDOW = 30                  # seconds
-    BAN_REASON = "Raid protection: multi-channel spam on join"
+    BAN_REASON = "Raid protection: multi-channel spam"
     APPEAL_SERVER_URL = "https://discord.gg/X9aQKymWpk"
+
+    SPAM_WINDOW = 20
+    CHANNEL_THRESHOLD = 3
+    MAX_LOG_SIZE = 100
+
 
     def __init__(self, bot: MyBot):
         self.bot = bot
+        # guild_id -> member_id -> deque[(ts, channel_id, content, message_id)]
         self.message_log = defaultdict(lambda: defaultdict(deque))
 
 
@@ -38,41 +45,44 @@ class AntiRaidSpam(commands.Cog):
         if member.guild_permissions.manage_messages:
             return
 
+        #BAIT CHANNEL: IMMEDIATE BAN
         if message.channel.id == bait_channel_id:
-            await self.handle_raid(member, message, [(now, bait_channel_id, message.content, message.id),])
+            await self.handle_raid(
+                member,
+                message,
+                [(now, bait_channel_id, message.content, message.id)],
+            )
             self.message_log[guild.id].pop(member.id, None)
             return
 
-        if not member.joined_at:
-            return
 
-        join_age = (discord.utils.utcnow() - member.joined_at).total_seconds()
-        if join_age > self.JOIN_GRACE_PERIOD:
+        has_new_role = any(r.id == new_member_role for r in member.roles)
+        if not has_new_role:
             return
 
         logs = self.message_log[guild.id][member.id]
-
         content = self.extract_message_content(message)
+
         logs.append((now, message.channel.id, content, message.id))
 
-        # Remove old entries
+        # Bound memory
+        if len(logs) > self.MAX_LOG_SIZE:
+            logs.popleft()
+
+        # Remove expired entries
         while logs and now - logs[0][0] > self.SPAM_WINDOW:
             logs.popleft()
 
         unique_channels = {cid for _, cid, _, _ in logs}
+        contents = [c for _, _, c, _ in logs]
+        repetitive = len(set(contents)) <= 2
 
-        if len(unique_channels) >= self.CHANNEL_THRESHOLD:
+        if len(unique_channels) >= self.CHANNEL_THRESHOLD and repetitive:
             await self.handle_raid(member, message, list(logs))
             self.message_log[guild.id].pop(member.id, None)
 
 
-
     def extract_message_content(self, message: discord.Message) -> str:
-        """
-        Extract meaningful content from a Discord message.
-        Covers text, embeds, attachments, and stickers.
-        """
-
         parts: list[str] = []
 
         if message.clean_content:
@@ -107,9 +117,9 @@ class AntiRaidSpam(commands.Cog):
         guild = member.guild
 
         try:
-            for log in logs:
-                self.bot.suppressed_deletes.add(log[3])
-        except IndexError:
+            for _, _, _, msg_id in logs:
+                self.bot.suppressed_deletes.add(msg_id)
+        except Exception:
             pass
 
         await self.send_dm_notice(member, guild)
@@ -136,8 +146,8 @@ class AntiRaidSpam(commands.Cog):
             title="You have been automatically banned",
             description=(
                 f"You were banned from **{guild.name}** due to **automated raid protection**.\n\n"
-                "Our system flagged your activity as spam-like behavior after joining.\n\n"
-                "**If this was a mistake**, you may appeal using the link below."
+                "Our system detected spam-like behavior across multiple channels.\n\n"
+                "**If this was a mistake**, you may appeal below."
             ),
             color=discord.Color.red(),
         )
@@ -146,7 +156,7 @@ class AntiRaidSpam(commands.Cog):
             value=f"[Join the appeal server]({self.APPEAL_SERVER_URL})",
             inline=False,
         )
-        embed.set_footer(text="This action was performed automatically 💠 Tortoise Community")
+        embed.set_footer(text="This action was performed automatically")
 
         try:
             await member.send(embed=embed)
@@ -167,11 +177,11 @@ class AntiRaidSpam(commands.Cog):
         lines = []
         for _, channel_id, content, _ in logs:
             ch = guild.get_channel(channel_id)
-            ch_name = f"#{ch.name}" if ch else f"#{channel_id}"
-            lines.append(f"**{ch_name}:** {content}")
+            name = f"#{ch.name}" if ch else f"#{channel_id}"
+            lines.append(f"**{name}:** {content}")
 
         embed = discord.Embed(
-            title="🚨 Raid Ban Triggered",
+            title="Raid Ban Triggered",
             color=discord.Color.orange(),
         )
         embed.add_field(
@@ -181,7 +191,10 @@ class AntiRaidSpam(commands.Cog):
         )
         embed.add_field(
             name="Joined",
-            value=f"<t:{int(member.joined_at.timestamp())}:R>",
+            value=(
+                f"<t:{int(member.joined_at.timestamp())}:R>"
+                if member.joined_at else "Unknown"
+            ),
             inline=False,
         )
         embed.add_field(
