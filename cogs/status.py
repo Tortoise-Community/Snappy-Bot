@@ -9,7 +9,7 @@ class StatusCog(commands.Cog):
         self.bot = bot
 
         self.statuses = [
-            "watching Tortoise Community 👀",
+            "watching Tortoise Community",
             "solving Leetcode problems 👨‍💻",
         ]
 

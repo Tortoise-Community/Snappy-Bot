@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import discord
+import asyncio
 from discord.ext import commands, tasks
 import constants
 from datetime import time as dtime, timezone
@@ -35,15 +36,6 @@ class Welcome(commands.Cog):
 
         channel = guild.get_channel(constants.general_channel_id) or guild.system_channel
         log_channel = guild.get_channel(constants.system_log_channel_id)
-
-        if channel:
-            try:
-                await channel.send(
-                    content=f"Hi {member.mention}! Welcome to our server.",
-                    delete_after=80,
-                )
-            except discord.Forbidden:
-                pass
 
         try:
             await log_channel.send(
@@ -90,6 +82,17 @@ class Welcome(commands.Cog):
             await member.send(embed=dm_embed)
         except discord.Forbidden:
             pass
+
+        await asyncio.sleep(60)
+
+        if channel:
+            try:
+                await channel.send(
+                    content=f"Hi {member.mention}! Welcome to our server.",
+                    delete_after=30,
+                )
+            except discord.Forbidden:
+                pass
 
     @commands.Cog.listener()
     async def on_member_remove(self, member: discord.Member):
