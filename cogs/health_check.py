@@ -11,6 +11,7 @@ import discord
 from discord.ext import commands
 from aiohttp import web
 from decouple import config
+from discord import app_commands
 
 import constants
 
@@ -129,6 +130,56 @@ class HealthCheck(commands.Cog):
             await self.site.stop()
         if self.runner:
             await self.runner.cleanup()
+
+    @app_commands.checks.cooldown(1, 60)
+    @app_commands.command(
+        name="health",
+        description="Show bot health, status, and system statistics"
+    )
+    async def health_command(self, interaction: discord.Interaction):
+        process = psutil.Process(os.getpid())
+        mem_mb = process.memory_info().rss / 1024 / 1024
+        uptime = int(time.time() - self.start_time)
+
+        embed = discord.Embed(
+            title="🫀 Snappy Bot Health Status",
+            color=discord.Color.green(),
+            timestamp=datetime.utcnow()
+        )
+
+        embed.add_field(name="Status", value="🟢 Healthy", inline=True)
+        embed.add_field(name="Build", value=f"`{self.bot.build_version}`", inline=True)
+        embed.add_field(name="Latency", value=f"{round(self.bot.latency * 1000, 2)} ms", inline=True)
+
+        embed.add_field(name="Uptime", value=f"{uptime} seconds", inline=True)
+        embed.add_field(name="Guilds", value=str(len(self.bot.guilds)), inline=True)
+        embed.add_field(
+            name="Users",
+            value=str(sum(g.member_count or 0 for g in self.bot.guilds)),
+            inline=True,
+        )
+
+        embed.add_field(name="Memory", value=f"{round(mem_mb, 2)} MB", inline=True)
+        embed.add_field(name="Python", value=platform.python_version(), inline=True)
+        embed.add_field(name="discord.py", value=discord.__version__, inline=True)
+
+        embed.add_field(
+            name="Website",
+            value="[snappy-bot.tortoisecommunity.org](https://snappy-bot.tortoisecommunity.org)",
+            inline=False,
+        )
+
+        embed.set_footer(text="Snappy Bot • Health Monitor")
+
+        await interaction.response.send_message(embed=embed, ephemeral=False)
+
+    @health_command.error
+    async def health_error(self, interaction: discord.Interaction, error):
+        if isinstance(error, app_commands.CommandOnCooldown):
+            await interaction.response.send_message(
+                f"⏳ Try again in {int(error.retry_after)} seconds.",
+                ephemeral=True
+            )
 
 
 async def setup(bot: commands.Bot):

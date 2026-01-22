@@ -7,7 +7,7 @@ import discord
 from discord.ext import commands
 
 from bot import MyBot
-from constants import system_log_channel_id, bait_channel_id, new_member_role
+from constants import system_log_channel_id, bait_channel_id, new_member_role, tortoise_guild_id
 
 
 class AntiRaidSpam(commands.Cog):
@@ -43,6 +43,15 @@ class AntiRaidSpam(commands.Cog):
         now = time.time()
 
         if member.guild_permissions.manage_messages:
+            return
+
+        if message.mention_everyone:
+            await self.handle_raid(
+                member,
+                message,
+                [(now, message.channel.id, "[Mentioned @everyone]", message.id)],
+            )
+            self.message_log[guild.id].pop(member.id, None)
             return
 
         #BAIT CHANNEL: IMMEDIATE BAN

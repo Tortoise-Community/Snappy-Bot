@@ -89,7 +89,7 @@ class Welcome(commands.Cog):
             try:
                 await channel.send(
                     content=f"Hi {member.mention}! Welcome to our server.",
-                    delete_after=30,
+                    delete_after=60,
                 )
             except discord.Forbidden:
                 pass
