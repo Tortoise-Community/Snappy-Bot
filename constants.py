@@ -105,3 +105,62 @@ embed_space = "\u200b "
 max_message_length = 1000
 
 rate_limit_minutes = 10
+
+RULES = {
+    1: {
+        "title": "Discord TOS",
+        "text": "Follow the Discord Community Guidelines and Terms of Service.",
+        "aliases": ["tos", "guidelines", "terms"],
+    },
+    2: {
+        "title": "Just ask",
+        "text": "Do not ask to ask. Just ask!",
+        "aliases": ["ask"],
+    },
+    3: {
+        "title": "Respect everyone",
+        "text": "Do not use Racist, Homophobic or Transphobic slurs that are abusive. "
+                "Respect all members and staffs.",
+        "aliases": ["racial", "homophobic", "homo", "slurs", "slur"],
+    },
+    4: {
+        "title": "No advertisement",
+        "text": "No unapproved advertising, including requests for paid work. "
+                "Projects can be showcased in #project-showcase.",
+        "aliases": ["ad", "advertise", "advertising", "projects", "project", "paid work"],
+    },
+    5: {
+        "title": "No selfbots",
+        "text": "Do not spam or use self-bots inside the server.",
+        "aliases": ["spam", "selfbot"],
+    },
+    6: {
+        "title": "No pings",
+        "text": "Do not try to mention @everyone, or unnecessarily ping members/roles. "
+                "You should mostly never ping members who are not present in the current discussion "
+                "unless they’ve previously given you permission.",
+        "aliases": ["mention", "mentions", "ping", "noping"],
+    },
+    7: {
+        "title": "Contacting staff",
+        "text": "Don't mention staff unless its an emergency or serious rule break. "
+                "If you wish to ask them a question use mod mail (DM @Tortoise Bot)",
+        "aliases": ["staff", "emergency", "modmail", "mail"],
+    },
+    8: {
+        "title": "Relevancy",
+        "text": "Keep discussions relevant to channel topics.",
+        "aliases": ["relevant", "discussion", "discussions", "channels", "topic"],
+    },
+    9: {
+        "title": "No NSFW",
+        "text": "No NSFW contents are allowed inside the server. Use of them will result in an Infraction.",
+        "aliases": ["nsfw"],
+    },
+    10: {
+        "title": "No DM",
+        "text": "Do not DM members without getting their permission first. "
+                "If you want coding help, use the help channels.",
+        "aliases": ["dm", "nodm"],
+    },
+}
