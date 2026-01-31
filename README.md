@@ -14,8 +14,6 @@ Snappy exists to fill that gap. It provides the **essential moderation and commu
 
 * Slash-command based moderation commands
 * Per-moderator ban rate limiting
-* Welcome messages and leave logging
-* Temporary welcome roles with automatic removal
 * DM restrictions for bot commands
 
 ### Community Tools
@@ -86,9 +84,7 @@ This project is open to contributors and community improvements. Please refer [C
 
 ### Important Notes
 
-* This is **not a paid project**
 * Contributions are voluntary
-* The bot is fully open source
 * Active contributors will receive `@Contributor` role in the community
 
 If you plan a larger refactor or feature addition, open an issue first to discuss scope.
@@ -102,4 +98,4 @@ This project is licensed under the **MIT License**.
 ## Status
 
 Snappy is actively maintained and production-ready for its current scope.
-It is intentionally minimal by design and will continue to coexist with Tortoise-Bot once the latter is restored.
+It is intentionally minimal by design and will continue to coexist with Tortoise-Bot.
