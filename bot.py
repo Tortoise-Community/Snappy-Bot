@@ -100,7 +100,7 @@ async def on_message(message: discord.Message):
     if message.guild is None:
         try:
             await message.channel.send(
-                "🚫 Commands are disabled in DMs. Please use me in a server."
+                "Want to contact staff? DM 👉 <@712323581828136971>"
             )
         except discord.Forbidden:
             pass
