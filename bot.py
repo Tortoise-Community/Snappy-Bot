@@ -49,7 +49,6 @@ class MyBot(commands.Bot):
         await self.welcome_role_manager.setup()
 
         # ---------- COGS ----------
-        await self.load_extension("cogs.moderation")
         await self.load_extension("cogs.leaderboard")
         await self.load_extension("cogs.challenge_notifications")
         await self.load_extension("cogs.status")
