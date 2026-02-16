@@ -50,7 +50,6 @@ class MyBot(commands.Bot):
 
         # ---------- COGS ----------
         await self.load_extension("cogs.leaderboard")
-        await self.load_extension("cogs.challenge_notifications")
         await self.load_extension("cogs.status")
         await self.load_extension("cogs.health_check")
 
