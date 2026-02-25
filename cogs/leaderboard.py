@@ -4,12 +4,57 @@ from typing import Optional
 import discord
 from discord.ext import commands
 from discord import app_commands
+from constants import challenges_channel_id
 
 
 class Leaderboard(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
         self.manager = bot.points_manager
+
+    @staticmethod
+    def build_challenge_embed():
+        return discord.Embed(
+            title="Challenge Guidelines",
+            description=(
+                "Participants who submit a valid working solution will be awarded points "
+                "and featured on the leaderboard.\n\n"
+
+                "**Guidelines:**\n"
+                "- Start with a brute force approach if needed, then optimize for time and space complexity.\n"
+                "- Do not use AI assistance.\n"
+                "- Discussions are allowed in <#781129674860003336>, but do not share full solutions.\n"
+                "- Any programming language is allowed.\n\n"
+
+                "**Complexity Target:**\n"
+                "- Aim for O(N) time and O(N) space or the best achievable complexity.\n"
+                "- All valid submissions receive 100 points.\n"
+                "- Optimal solutions receive an additional 50 points.\n"
+                "- Special challenges award 150 points, with 50 bonus points for optimal solutions (200 total).\n\n"
+
+                "**Submission Rules:**\n"
+                "- Post solutions in <#780842875901575228>\n"
+                "- Use spoiler tags to hide your code when submitting.\n"
+                "- You may use <@712323581828136971> to validate your solution.\n"
+                "- Use `/run` followed by properly formatted code blocks in <#781129674860003336>.\n"
+                "- Delete your code after execution to avoid spoiling solutions.\n"
+                "- Use `/run_help` for more information."
+            ),
+            color=discord.Color.green()
+        )
+
+    @commands.Cog.listener()
+    async def on_message(self, message):
+        if message.author.bot:
+            return
+
+        if message.channel == challenges_channel_id:
+            await message.reply(embed=self.build_challenge_embed(), mention_author=False)
+
+
+    @app_commands.command(name="challenge_rules", description="Show challenge guidelines")
+    async def rules(self, interaction: discord.Interaction):
+        await interaction.response.send_message(embed=self.build_challenge_embed())
 
 
     @app_commands.command(name="rmpoints", description="Remove points from a user (mods only).")
