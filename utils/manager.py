@@ -16,54 +16,6 @@ class Database:
         if self.pool:
             await self.pool.close()
 
-
-class BanLimitManager:
-    def __init__(self, db: Database, max_bans: int = 3, hours: int = 24):
-        self.db = db
-        self.max_bans = max_bans
-        self.hours = hours
-
-    async def setup(self):
-        await self.db.pool.execute(
-            """
-            CREATE TABLE IF NOT EXISTS ban_records (
-                user_id   BIGINT NOT NULL,
-                timestamp TIMESTAMPTZ NOT NULL
-            )
-            """
-        )
-
-    async def try_ban(self, user_id: int) -> bool:
-        now = datetime.utcnow()
-        limit_time = now - timedelta(hours=self.hours)
-
-        async with self.db.pool.acquire() as conn:
-            async with conn.transaction():
-                await conn.execute(
-                    "DELETE FROM ban_records WHERE timestamp < $1",
-                    limit_time,
-                )
-
-                count = await conn.fetchval(
-                    "SELECT COUNT(*) FROM ban_records WHERE user_id = $1",
-                    user_id,
-                )
-
-                if count >= self.max_bans:
-                    return False
-
-                await conn.execute(
-                    """
-                    INSERT INTO ban_records (user_id, timestamp)
-                    VALUES ($1, $2)
-                    """,
-                    user_id,
-                    now,
-                )
-
-        return True
-
-
 class PointsManager:
     def __init__(self, db: Database):
         self.db = db
@@ -134,63 +86,72 @@ class PointsManager:
         return [(r["user_id"], r["points"]) for r in rows]
 
 
-
-class WelcomeRoleManager:
+class AFKManager:
     def __init__(self, db: Database):
         self.db = db
 
     async def setup(self):
         await self.db.pool.execute(
             """
-            CREATE TABLE IF NOT EXISTS welcome_roles (
+            CREATE TABLE IF NOT EXISTS afk_status (
                 guild_id BIGINT NOT NULL,
                 user_id  BIGINT NOT NULL,
-                role_id  BIGINT NOT NULL,
-                remove_at TIMESTAMPTZ NOT NULL,
-                PRIMARY KEY (guild_id, user_id, role_id)
+                reason   TEXT,
+                until    TIMESTAMPTZ NOT NULL,
+                PRIMARY KEY (guild_id, user_id)
             )
             """
         )
 
-    async def schedule_removal(
+    async def set_afk(
         self,
         guild_id: int,
         user_id: int,
-        role_id: int,
-        days: int = 7,
+        until: datetime,
+        reason: str | None = None,
     ):
-        remove_at = datetime.utcnow() + timedelta(days=days)
-
         await self.db.pool.execute(
             """
-            INSERT INTO welcome_roles (guild_id, user_id, role_id, remove_at)
+            INSERT INTO afk_status (guild_id, user_id, reason, until)
             VALUES ($1, $2, $3, $4)
-            ON CONFLICT (guild_id, user_id, role_id)
-            DO UPDATE SET remove_at = EXCLUDED.remove_at
+            ON CONFLICT (guild_id, user_id)
+            DO UPDATE SET reason = EXCLUDED.reason,
+                          until = EXCLUDED.until
             """,
             guild_id,
             user_id,
-            role_id,
-            remove_at,
+            reason,
+            until,
         )
 
-    async def get_due_removals(self):
+    async def remove_afk(self, guild_id: int, user_id: int):
+        await self.db.pool.execute(
+            """
+            DELETE FROM afk_status
+            WHERE guild_id = $1 AND user_id = $2
+            """,
+            guild_id,
+            user_id,
+        )
+
+    async def get_afk(self, guild_id: int, user_id: int):
+        row = await self.db.pool.fetchrow(
+            """
+            SELECT reason, until
+            FROM afk_status
+            WHERE guild_id = $1 AND user_id = $2
+            """,
+            guild_id,
+            user_id,
+        )
+        return row
+
+    async def get_expired(self):
         rows = await self.db.pool.fetch(
             """
-            SELECT guild_id, user_id, role_id
-            FROM welcome_roles
-            WHERE remove_at <= NOW()
+            SELECT guild_id, user_id
+            FROM afk_status
+            WHERE until <= NOW()
             """
         )
-        return [(r["guild_id"], r["user_id"], r["role_id"]) for r in rows]
-
-    async def delete_entry(self, guild_id: int, user_id: int, role_id: int):
-        await self.db.pool.execute(
-            """
-            DELETE FROM welcome_roles
-            WHERE guild_id = $1 AND user_id = $2 AND role_id = $3
-            """,
-            guild_id,
-            user_id,
-            role_id,
-        )
+        return [(r["guild_id"], r["user_id"]) for r in rows]

@@ -8,9 +8,8 @@ from utils.embed_handler import simple_embed
 
 from constants import system_log_channel_id
 from utils.manager import (
-    BanLimitManager,
+    AFKManager,
     PointsManager,
-    WelcomeRoleManager,
     Database,
 )
 
@@ -21,9 +20,8 @@ DB_URL = config("DB_URL")
 class MyBot(commands.Bot):
     def __init__(self):
         self.db = None
-        self.welcome_role_manager = None
         self.points_manager = None
-        self.ban_manager = None
+        self.afk_manager = None
         self.build_version = None
         intents = discord.Intents.default()
         intents.members = True
@@ -40,17 +38,16 @@ class MyBot(commands.Bot):
         self.db = Database(DB_URL)
         await self.db.connect()
 
-        self.ban_manager = BanLimitManager(self.db)
+        self.afk_manager = AFKManager(self.db)
         self.points_manager = PointsManager(self.db)
-        self.welcome_role_manager = WelcomeRoleManager(self.db)
 
-        await self.ban_manager.setup()
+        await self.afk_manager.setup()
         await self.points_manager.setup()
-        await self.welcome_role_manager.setup()
 
         # ---------- COGS ----------
         await self.load_extension("cogs.leaderboard")
         await self.load_extension("cogs.status")
+        await self.load_extension("cogs.afk")
         await self.load_extension("cogs.health_check")
 
         await self.tree.sync()
