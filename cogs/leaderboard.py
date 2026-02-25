@@ -43,13 +43,13 @@ class Leaderboard(commands.Cog):
             color=discord.Color.green()
         )
 
-    @commands.Cog.listener()
-    async def on_message(self, message):
-        if message.author.bot:
-            return
-
-        if message.channel == challenges_channel_id:
-            await message.reply(embed=self.build_challenge_embed(), mention_author=False)
+    # @commands.Cog.listener()
+    # async def on_message(self, message):
+    #     if message.author.bot:
+    #         return
+    #
+    #     if message.channel == challenges_channel_id:
+    #         await message.reply(embed=self.build_challenge_embed(), mention_author=False)
 
 
     @app_commands.command(name="challenge_rules", description="Show challenge guidelines")
