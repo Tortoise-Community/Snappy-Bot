@@ -32,7 +32,7 @@ class StatusCog(commands.Cog):
             activity=discord.Activity(
                 type=discord.ActivityType.streaming,
                 name=next(self.status_cycle),
-                url="https://www.twitch.tv/tortoisecommunity"
+                url="https://www.youtube.com/watch?v=dQw4w9WgXcQ"
             ),
         )
 
